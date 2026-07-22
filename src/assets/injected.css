@@ -1,0 +1,41 @@
+::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;background:transparent!important}
+::-webkit-scrollbar-track{display:none!important;background:transparent!important}
+::-webkit-scrollbar-thumb{display:none!important;background:transparent!important}
+::-webkit-scrollbar-corner{display:none!important;background:transparent!important}
+*{scrollbar-width:none!important;-ms-overflow-style:none!important;scrollbar-gutter:auto!important}
+html{overflow-y:auto;scrollbar-gutter:auto;scrollbar-color:transparent transparent!important}
+:root{--ytmusic-scrollbar-width:0px!important;--ytd-scrollbar-width:0px!important}
+
+ytmusic-browse-response .background-gradient,
+.background-gradient.ytmusic-browse-response,
+div.background-gradient.style-scope.ytmusic-browse-response {
+  background: transparent !important;
+  background-image: none !important;
+}
+ytmusic-player {
+  --ytmusic-player-overlay-gradient: none !important;
+  background: transparent !important;
+}
+.background-gradient.ytmusic-immersive-carousel-shelf-renderer {
+  display: none !important;
+}
+.image.ytmusic-immersive-header-renderer ~ .content-container-wrapper.ytmusic-immersive-header-renderer .gradient-container.ytmusic-immersive-header-renderer {
+  background: transparent !important;
+}
+ytmusic-background-overlay-renderer#background,
+div#background {
+  opacity: 0 !important;
+}
+#mini-guide-background,
+#nav-bar-background,
+player-bar-background {
+  background: var(--ytmusic-background, #000) !important;
+  opacity: 1 !important;
+}
+ytmusic-player-bar {
+  background: var(--ytmusic-background, #000) !important;
+}
+#nav-bar-background.ytmusic-app-layout {
+  --ytmusic-brand-background-solid: var(--ytmusic-background, #000) !important;
+}
+ytmusic-cast-button{display:none!important}

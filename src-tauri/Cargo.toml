@@ -1,6 +1,6 @@
 [package]
 name = "ymusic"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 description = "YMusic Desktop Client"
 
@@ -13,5 +13,4 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon"] }
-tauri-plugin-window-state = "2"
 http = "1"
