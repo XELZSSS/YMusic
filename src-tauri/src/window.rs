@@ -29,6 +29,9 @@ fn build_initialization_script() -> String {
         include_str!("../../src/scripts/dom-remover.js"),
         include_str!("../../src/scripts/audio-ad.js"),
         include_str!("../../src/scripts/tracking-cleaner.js"),
+        include_str!("../../src/scripts/innertube-tweaks.js"),
+        include_str!("../../src/scripts/equalizer.js"),
+        include_str!("../../src/scripts/eq-ui.js"),
     ];
     format!(
         "window.__YM_CSS={};(function(){{if(window.__ym_adblock)return;window.__ym_adblock=true;{}}})();",

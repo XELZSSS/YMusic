@@ -19,9 +19,35 @@ fn on_window_close_requested(app_handle: &tauri::AppHandle) {
     let _ = win.hide();
 }
 
+#[tauri::command]
+fn set_eq_band(app: tauri::AppHandle, index: usize, gain: f64) {
+    if let Some(win) = app.get_webview_window("main") {
+        let _ = win.eval(&format!("window.__ym_eq_set_band && window.__ym_eq_set_band({}, {})", index, gain));
+    }
+}
+
+#[tauri::command]
+fn set_eq_preamp(app: tauri::AppHandle, gain: f64) {
+    if let Some(win) = app.get_webview_window("main") {
+        let _ = win.eval(&format!("window.__ym_eq_set_preamp && window.__ym_eq_set_preamp({})", gain));
+    }
+}
+
+#[tauri::command]
+fn toggle_eq(app: tauri::AppHandle, enabled: bool) {
+    if let Some(win) = app.get_webview_window("main") {
+        let _ = win.eval(&format!("window.__ym_eq_toggle && window.__ym_eq_toggle({})", enabled));
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            set_eq_band,
+            set_eq_preamp,
+            toggle_eq,
+        ])
         .setup(|app| {
             std::env::set_var(
                 "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
