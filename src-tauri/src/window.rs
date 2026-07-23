@@ -1,6 +1,3 @@
-use std::thread;
-use std::time::Duration;
-
 use tauri::webview::PageLoadEvent;
 use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri::Manager;
@@ -50,22 +47,26 @@ fn show_window(webview: &WebviewWindow) {
     let _ = webview.set_focus();
     if was_max {
         let w = webview.clone();
-        thread::spawn(move || {
-            thread::sleep(Duration::from_millis(150));
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(150));
             let _ = w.maximize();
         });
     }
 }
 
 fn restore_eq_state(webview: &WebviewWindow, bands: &[f64; 10], preamp: f64, enabled: bool) {
-    let bands_js = bands.iter().map(|b| b.to_string()).collect::<Vec<_>>().join(",");
+    let mut bands_js = String::new();
+    for (i, b) in bands.iter().enumerate() {
+        if i > 0 { bands_js.push(','); }
+        bands_js.push_str(&b.to_string());
+    }
     util::eval(webview, &format!(
         "window.__ym.eq.toggle({});window.__ym.eq.applyPreset([{}],{})",
         enabled, bands_js, preamp
     ));
 }
 
-pub fn create_main_window(app: &tauri::AppHandle) -> Result<WebviewWindow, Box<dyn std::error::Error>> {
+pub fn create_main_window(app: &tauri::AppHandle, i18n: &I18n) -> Result<WebviewWindow, Box<dyn std::error::Error>> {
     let url = WebviewUrl::External(config::YMUSIC_URL.parse()?);
     let combined_script = build_initialization_script();
 
@@ -73,7 +74,7 @@ pub fn create_main_window(app: &tauri::AppHandle) -> Result<WebviewWindow, Box<d
         .inner_size(config::WINDOW_WIDTH, config::WINDOW_HEIGHT)
         .min_inner_size(config::WINDOW_MIN_WIDTH, config::WINDOW_MIN_HEIGHT)
         .resizable(true)
-        .title(I18n::new().t(I18nKey::AppWindowTitle))
+        .title(i18n.t(I18nKey::AppWindowTitle))
         .visible(false)
         .theme(Some(tauri::Theme::Dark))
         .on_web_resource_request(crate::privacy::on_resource_request)

@@ -1,4 +1,5 @@
 (function() {
+  "use strict";
   function prune(o) {
     if (o && typeof o === 'object' && !Array.isArray(o)) {
       delete o.playerAds;

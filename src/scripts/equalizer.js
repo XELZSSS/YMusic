@@ -1,6 +1,7 @@
 window.__ym = window.__ym || {};
 
 (function(ym) {
+  "use strict";
   var bands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   var preamp = 0;
   var enabled = true;
@@ -10,8 +11,18 @@ window.__ym = window.__ym || {};
   var filters = null;
   var preGain = null;
 
+  function teardown() {
+    if (ctx && ctx.state !== 'closed') {
+      ctx.close();
+    }
+    ctx = null;
+    filters = null;
+    preGain = null;
+  }
+
   function setup(video) {
     if (!video || video.__ym_eq_done) return;
+    teardown();
     try {
       var c = new (window.AudioContext || window.webkitAudioContext)();
       if (c.state === 'suspended') c.resume();
@@ -78,9 +89,13 @@ window.__ym = window.__ym || {};
     tryBind();
   }
 
+  var obsDebounce = null;
   var obs = new MutationObserver(function() {
-    var video = document.querySelector('video');
-    if (video && !video.__ym_eq_done && video.readyState >= 2) setup(video);
+    if (obsDebounce) clearTimeout(obsDebounce);
+    obsDebounce = setTimeout(function() {
+      var video = document.querySelector('video');
+      if (video && !video.__ym_eq_done && video.readyState >= 2) setup(video);
+    }, 300);
   });
   if (document.body) {
     obs.observe(document.body, { childList: true, subtree: true });

@@ -1,3 +1,5 @@
+#![deny(unsafe_code)]
+
 mod config;
 mod eq_state;
 mod i18n;
@@ -35,9 +37,16 @@ fn on_window_close_requested(app_handle: &tauri::AppHandle) {
     let _ = win.hide();
 }
 
+use std::sync::OnceLock;
+static I18N: OnceLock<i18n::I18n> = OnceLock::new();
+
+fn get_i18n() -> &'static i18n::I18n {
+    I18N.get_or_init(i18n::I18n::new)
+}
+
 #[tauri::command]
 fn get_locale() -> String {
-    i18n::I18n::new().lang().to_string()
+    get_i18n().lang().to_string()
 }
 
 #[tauri::command]
@@ -101,7 +110,7 @@ pub fn run() {
 
             let saved = eq_state::load(app.handle());
 
-            let webview = window::create_main_window(app.handle())
+            let webview = window::create_main_window(app.handle(), get_i18n())
                 .expect("Failed to create main window");
 
             let app_handle = app.handle().clone();
@@ -112,7 +121,7 @@ pub fn run() {
                 }
             });
 
-            tray::create_tray(app.handle(), &saved);
+            tray::create_tray(app.handle(), &saved, get_i18n());
 
             Ok(())
         })

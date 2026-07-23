@@ -5,7 +5,8 @@ const os = require('os');
 
 const ROOT = path.resolve(__dirname, '..');
 const SRC_TAURI = path.join(ROOT, 'src-tauri');
-const KEY_PATH = path.join(os.homedir(), '.tauri', 'ymusic.key');
+const KEY_PATH = process.env.TAURI_SIGNING_PRIVATE_KEY_PATH || path.join(os.homedir(), '.tauri', 'ymusic.key');
+const KEY_PASSWORD = process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '';
 
 const X64_DIR = path.join(SRC_TAURI, 'target', 'release', 'bundle', 'nsis');
 const X86_DIR = path.join(SRC_TAURI, 'target', 'i686-pc-windows-msvc', 'release', 'bundle', 'nsis');
@@ -18,7 +19,7 @@ function runWithKey(cmd) {
     env: {
       ...process.env,
       TAURI_SIGNING_PRIVATE_KEY: readFileSync(KEY_PATH, 'utf-8').replace(/\r?\n$/, ''),
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: '',
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: KEY_PASSWORD,
     },
   });
 }
@@ -36,10 +37,20 @@ cleanDir(X64_DIR);
 cleanDir(X86_DIR);
 
 console.log('\n[1/5] Building x64...');
-runWithKey('npm run build');
+try {
+  runWithKey('npm run build');
+} catch (e) {
+  console.error('x64 build failed:', e.message);
+  process.exit(1);
+}
 
 console.log('\n[2/5] Building x86...');
-runWithKey('npm run build:x86');
+try {
+  runWithKey('npm run build:x86');
+} catch (e) {
+  console.error('x86 build failed:', e.message);
+  process.exit(1);
+}
 
 if (!existsSync(X86_DIR)) {
   console.error(`Error: x86 bundle directory not found at ${X86_DIR}`);
@@ -61,8 +72,8 @@ const platforms = {};
 for (const f of installers) {
   const sigPath = path.join(X64_DIR, f + '.sig');
   if (!existsSync(sigPath)) {
-    console.warn(`  [WARN] Signature not found: ${f}.sig, skipping`);
-    continue;
+    console.error(`  [ERROR] Signature not found: ${f}.sig`);
+    process.exit(1);
   }
   const sig = readFileSync(sigPath, 'utf-8').trim();
   const key = f.includes('x64') ? 'windows-x86_64' : 'windows-i686';

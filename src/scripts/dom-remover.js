@@ -1,5 +1,6 @@
 (function() {
-  var SELECTORS = [
+  "use strict";
+  var ALL_SELECTORS = [
     'ytmusic-mealbar-promo-renderer',
     'ytmusic-ad-placeholder',
     'ytmusic-ad-in-collection',
@@ -22,33 +23,26 @@
     '.ytp-ad-image-overlay',
     '.ytp-ad-overlay-container',
     'ytmusic-cast-button',
-  ];
+  ].join(',');
 
   function remove() {
-    var all = SELECTORS.join(',');
-    var els = document.querySelectorAll(all);
+    var els = document.querySelectorAll(ALL_SELECTORS);
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
       if (el && el.parentNode) el.remove();
     }
-    var mealbar = document.querySelector('ytmusic-mealbar-promo-renderer');
-    if (mealbar) {
-      var btn = mealbar.querySelector('#dismiss-button, [aria-label="Close"], tp-yt-paper-icon-button');
-      if (btn) btn.click();
-      mealbar.remove();
-    }
   }
+
+  remove();
 
   var debounceId = null;
-  function onMutation() {
+  var obs = new MutationObserver(function() {
     if (debounceId) clearTimeout(debounceId);
     debounceId = setTimeout(remove, 150);
-  }
-
+  });
   if (document.documentElement) {
-    var obs = new MutationObserver(onMutation);
     obs.observe(document.documentElement, { childList: true, subtree: true });
   }
-  remove();
-  setInterval(remove, 5000);
+  window.__ym_cleanup = window.__ym_cleanup || [];
+  window.__ym_cleanup.push(function() { obs.disconnect(); if (debounceId) clearTimeout(debounceId); });
 })();

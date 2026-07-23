@@ -1,6 +1,7 @@
 window.__ym = window.__ym || {};
 
 (function(ym) {
+  "use strict";
   document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && e.key === 'E') {
       e.preventDefault();
@@ -14,7 +15,9 @@ window.__ym = window.__ym || {};
             bands: ym.eq.getBands(),
             preamp: ym.eq.getPreamp(),
           });
-        } catch(ex) {}
+        } catch(ex) {
+          console.warn('[YMusic] save_eq_state failed:', ex);
+        }
       }
     }
   });

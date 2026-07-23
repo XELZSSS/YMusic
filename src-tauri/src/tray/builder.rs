@@ -12,8 +12,7 @@ pub struct EqMenuItems<R: Runtime> {
     pub eq_submenu: tauri::menu::Submenu<R>,
 }
 
-pub fn build_eq_submenu<R: Runtime>(app: &AppHandle<R>, saved: &EqState) -> Result<EqMenuItems<R>, &'static str> {
-    let i18n = I18n::new();
+pub fn build_eq_submenu<R: Runtime>(app: &AppHandle<R>, saved: &EqState, i18n: &I18n) -> Result<EqMenuItems<R>, &'static str> {
 
     let Ok(eq_reset) = MenuItemBuilder::with_id("eq_reset", i18n.t(I18nKey::TrayResetEq))
         .build(app)

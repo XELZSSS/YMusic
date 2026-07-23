@@ -1,4 +1,5 @@
 (function() {
+  "use strict";
   var TRACK = [
     'fbclid','gclid','gclsrc','dclid','gbraid','wbraid',
     'msclkid','twclid','igshid','yclid','li_fat_id',
@@ -46,23 +47,26 @@
 
   var _origFetch = window.fetch;
   window.fetch = function(input, init) {
-    var url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
-    url = cleanTrackingParams(url);
-    if (url !== input && typeof input === 'string') input = url;
+    if (typeof input === 'string') {
+      input = cleanTrackingParams(input);
+    } else if (input instanceof Request) {
+      var cleaned = cleanTrackingParams(input.url);
+      if (cleaned !== input.url) {
+        input = new Request(cleaned, input);
+      }
+    }
     init = tweakInnertubeRequest(input, init);
     return _origFetch.call(this, input, init);
   };
 
   var ps = history.pushState, rs = history.replaceState;
-  history.pushState = function() {
-    ps.apply(this, arguments);
-    var c = cleanTrackingParams(location.href);
-    if (c !== location.href) rs.call(history, null, '', c);
+  history.pushState = function(data, title, url) {
+    var cleaned = typeof url === 'string' ? cleanTrackingParams(url) : url;
+    return ps.call(this, data, title, cleaned || url);
   };
-  history.replaceState = function() {
-    rs.apply(this, arguments);
-    var c = cleanTrackingParams(location.href);
-    if (c !== location.href) rs.call(history, null, '', c);
+  history.replaceState = function(data, title, url) {
+    var cleaned = typeof url === 'string' ? cleanTrackingParams(url) : url;
+    return rs.call(this, data, title, cleaned || url);
   };
   var cur = cleanTrackingParams(location.href);
   if (cur !== location.href) rs.call(history, null, '', cur);

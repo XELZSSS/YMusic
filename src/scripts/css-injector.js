@@ -1,4 +1,5 @@
 (function() {
+  "use strict";
   function inject() {
     if (!window.__YM_CSS || document.getElementById('__ym-css') || !document.head) return;
     var s = document.createElement('style');

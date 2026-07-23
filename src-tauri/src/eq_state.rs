@@ -34,8 +34,13 @@ pub fn load(app: &AppHandle) -> EqState {
 
 pub fn save(app: &AppHandle, state: &EqState) {
     if let Ok(store) = app.store(STORE_FILE) {
-        let _ = store.set(STORE_KEY, serde_json::to_value(state).unwrap());
-        let _ = store.save();
+        match serde_json::to_value(state) {
+            Ok(val) => {
+                store.set(STORE_KEY, val);
+                let _ = store.save();
+            }
+            Err(e) => log::error!("Failed to serialize EQ state: {}", e),
+        }
     }
 }
 

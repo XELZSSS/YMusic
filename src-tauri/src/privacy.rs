@@ -10,9 +10,7 @@ fn is_youtube_request(request: &http::Request<Vec<u8>>) -> bool {
 
 fn strip_csp_headers(response: &mut http::Response<Cow<'static, [u8]>>) {
     response.headers_mut().remove("content-security-policy");
-    response.headers_mut().remove("Content-Security-Policy");
     response.headers_mut().remove("content-security-policy-report-only");
-    response.headers_mut().remove("Content-Security-Policy-Report-Only");
 }
 
 fn is_html_response(response: &http::Response<Cow<'static, [u8]>>) -> bool {

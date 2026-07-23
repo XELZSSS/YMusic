@@ -23,8 +23,15 @@ fn toggle_window(app: &AppHandle) {
 }
 
 fn apply_preset(app: &AppHandle, idx: usize) {
-    let preset = &crate::presets::PRESETS[idx];
-    let bands_str = preset.bands.iter().map(|b| b.to_string()).collect::<Vec<_>>().join(",");
+    let Some(preset) = crate::presets::PRESETS.get(idx) else {
+        log::error!("Invalid preset index: {}", idx);
+        return;
+    };
+    let mut bands_str = String::new();
+    for (i, b) in preset.bands.iter().enumerate() {
+        if i > 0 { bands_str.push(','); }
+        bands_str.push_str(&b.to_string());
+    }
     if let Some(win) = app.get_webview_window("main") {
         util::eval(&win, &format!(
             "window.__ym.eq.applyPreset([{}],{})",
@@ -45,8 +52,7 @@ fn toggle_eq(app: &AppHandle, checked: bool) {
     }
 }
 
-pub fn create_tray(app: &AppHandle, saved: &EqState) {
-    let i18n = I18n::new();
+pub fn create_tray(app: &AppHandle, saved: &EqState, i18n: &I18n) {
     let last = Mutex::new(saved.clone());
 
     let Ok(show_hide) = MenuItemBuilder::with_id("show_hide", i18n.t(I18nKey::TrayShowHide))
@@ -63,7 +69,7 @@ pub fn create_tray(app: &AppHandle, saved: &EqState) {
         return;
     };
 
-    let eq_items = match builder::build_eq_submenu(app, saved) {
+    let eq_items = match builder::build_eq_submenu(app, saved, i18n) {
         Ok(v) => v,
         Err(msg) => { log::error!("{}", msg); return; }
     };
@@ -104,12 +110,19 @@ pub fn create_tray(app: &AppHandle, saved: &EqState) {
                         let _ = item.set_checked(false);
                     }
                 }
-                let mut ls = last.lock().unwrap();
+                let mut ls = match last.lock() {
+                    Ok(guard) => guard,
+                    Err(poisoned) => {
+                        log::error!("EQ state mutex poisoned, recovering");
+                        poisoned.into_inner()
+                    }
+                };
                 ls.enabled = checked;
                 eq_state::save(app, &ls);
             }
             id if id.starts_with("eq_preset_") => {
                 let idx: usize = id.trim_start_matches("eq_preset_").parse().unwrap_or(0);
+                let idx = idx.min(crate::presets::PRESETS.len().saturating_sub(1));
                 let preset = &crate::presets::PRESETS[idx];
                 apply_preset(app, idx);
                 for (item, i) in &preset_clones {
@@ -122,7 +135,13 @@ pub fn create_tray(app: &AppHandle, saved: &EqState) {
                     bands: preset.bands,
                     preamp: preset.preamp,
                 };
-                *last.lock().unwrap() = state.clone();
+                match last.lock() {
+                    Ok(mut guard) => *guard = state.clone(),
+                    Err(poisoned) => {
+                        log::error!("EQ state mutex poisoned, recovering");
+                        *poisoned.into_inner() = state.clone();
+                    }
+                }
                 eq_state::save(app, &state);
             }
             "eq_reset" => {
@@ -137,7 +156,13 @@ pub fn create_tray(app: &AppHandle, saved: &EqState) {
                     bands: [0.0; 10],
                     preamp: 0.0,
                 };
-                *last.lock().unwrap() = state.clone();
+                match last.lock() {
+                    Ok(mut guard) => *guard = state.clone(),
+                    Err(poisoned) => {
+                        log::error!("EQ state mutex poisoned, recovering");
+                        *poisoned.into_inner() = state.clone();
+                    }
+                }
                 eq_state::save(app, &state);
             }
             _ => {}
