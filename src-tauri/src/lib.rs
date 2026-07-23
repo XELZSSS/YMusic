@@ -32,7 +32,7 @@ fn on_window_close_requested(app_handle: &tauri::AppHandle) {
     }
     util::eval(&win,
         "var v=document.querySelector('video');\
-         if(v&&v.paused){v.src='';v.load()}",
+         if(v){v.pause();v.src='';v.load()}",
     );
     let _ = win.hide();
 }
@@ -57,6 +57,19 @@ fn get_eq_presets() -> Vec<presets::EqPreset> {
 #[tauri::command]
 fn save_eq_state(app: tauri::AppHandle, enabled: bool, preset_index: Option<usize>, bands: [f64; 10], preamp: f64) {
     eq_state::save(&app, &eq_state::EqState { enabled, preset_index, bands, preamp });
+}
+
+#[tauri::command]
+fn toggle_always_on_top(window: tauri::WebviewWindow) -> bool {
+    let on = window.is_always_on_top().unwrap_or(false);
+    let _ = window.set_always_on_top(!on);
+    !on
+}
+
+#[tauri::command]
+fn toggle_audio_only(win: tauri::WebviewWindow) -> bool {
+    let js = "window.__ym.audioOnly.toggle()";
+    win.eval(js).is_ok()
 }
 
 fn toggle_eq_global(app: &tauri::AppHandle) {
@@ -94,6 +107,8 @@ pub fn run() {
             get_locale,
             get_eq_presets,
             save_eq_state,
+            toggle_always_on_top,
+            toggle_audio_only,
         ])
         .setup(|app| {
             std::env::set_var(

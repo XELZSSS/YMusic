@@ -15,6 +15,14 @@ pub enum I18nKey {
     TrayPresetClassical,
     TrayPresetBass,
     TrayPresetTreble,
+    TrayAlwaysOnTop,
+    TrayPictureInPicture,
+    TrayAudioOnly,
+    TraySleepTimer,
+    TraySleep15min,
+    TraySleep30min,
+    TraySleep60min,
+    TraySleepOff,
 }
 
 pub struct I18n {
@@ -50,6 +58,14 @@ impl I18n {
             TrayPresetClassical => if is_zh { "古典" } else { "Classical" },
             TrayPresetBass => if is_zh { "低音增强" } else { "Bass Booster" },
             TrayPresetTreble => if is_zh { "高音增强" } else { "Treble Boost" },
+            TrayAlwaysOnTop => if is_zh { "窗口置顶" } else { "Always on Top" },
+            TrayPictureInPicture => if is_zh { "画中画" } else { "Picture in Picture" },
+            TrayAudioOnly => if is_zh { "仅音频" } else { "Audio Only" },
+            TraySleepTimer => if is_zh { "睡眠定时器" } else { "Sleep Timer" },
+            TraySleep15min => if is_zh { "15 分钟" } else { "15 min" },
+            TraySleep30min => if is_zh { "30 分钟" } else { "30 min" },
+            TraySleep60min => if is_zh { "60 分钟" } else { "60 min" },
+            TraySleepOff => if is_zh { "关闭定时" } else { "Off" },
         }
     }
 }

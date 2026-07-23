@@ -8,6 +8,7 @@ window.__ym = window.__ym || {};
   var FREQ = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 
   var ctx = null;
+  var analyser = null;
   var filters = null;
   var preGain = null;
 
@@ -16,6 +17,7 @@ window.__ym = window.__ym || {};
       ctx.close();
     }
     ctx = null;
+    analyser = null;
     filters = null;
     preGain = null;
   }
@@ -27,9 +29,13 @@ window.__ym = window.__ym || {};
       var c = new (window.AudioContext || window.webkitAudioContext)();
       if (c.state === 'suspended') c.resume();
       var s = c.createMediaElementSource(video);
+      var a = c.createAnalyser();
+      a.fftSize = 256;
+      a.smoothingTimeConstant = 0.8;
       var pg = c.createGain();
       pg.gain.value = 1;
       var fs = [];
+      s.connect(a);
       var prev = pg;
       for (var i = 0; i < FREQ.length; i++) {
         var f = c.createBiquadFilter();
@@ -41,9 +47,9 @@ window.__ym = window.__ym || {};
         prev = f;
         fs.push(f);
       }
-      s.connect(pg);
+      a.connect(pg);
       prev.connect(c.destination);
-      ctx = c; filters = fs; preGain = pg;
+      ctx = c; analyser = a; filters = fs; preGain = pg;
       video.__ym_eq_done = true;
       apply();
     } catch(e) {
@@ -61,6 +67,11 @@ window.__ym = window.__ym || {};
       preGain.gain.value = on ? Math.pow(10, preamp / 20) : 1;
     }
   }
+
+  ym.audio = {
+    getContext: function() { return ctx; },
+    getAnalyser: function() { return analyser; },
+  };
 
   ym.eq = {
     setBand: function(idx, gainDb) {

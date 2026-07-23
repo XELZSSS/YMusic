@@ -1,4 +1,4 @@
-use tauri::webview::PageLoadEvent;
+use tauri::webview::{NewWindowResponse, PageLoadEvent};
 use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri::Manager;
 
@@ -28,8 +28,10 @@ fn build_initialization_script() -> String {
         include_str!("../../src/scripts/dom-remover.js"),
         include_str!("../../src/scripts/unified-fetch.js"),
         include_str!("../../src/scripts/audio-ad.js"),
+        include_str!("../../src/scripts/ytcfg-injector.js"),
         include_str!("../../src/scripts/equalizer.js"),
-        include_str!("../../src/scripts/eq-ui.js"),
+        include_str!("../../src/scripts/visualizer.js"),
+        include_str!("../../src/scripts/audio-only.js"),
     ];
     format!(
         "window.__YM_CSS={};(function(){{if(window.__ym_adblock)return;window.__ym_adblock=true;{}}})();",
@@ -78,6 +80,7 @@ pub fn create_main_window(app: &tauri::AppHandle, i18n: &I18n) -> Result<Webview
         .visible(false)
         .theme(Some(tauri::Theme::Dark))
         .on_web_resource_request(crate::privacy::on_resource_request)
+        .on_new_window(|_url, _features| NewWindowResponse::Allow)
         .initialization_script(&combined_script)
         .on_page_load(move |webview, event| {
             if let PageLoadEvent::Finished = event.event() {

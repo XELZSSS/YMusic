@@ -31,12 +31,11 @@
           body.contentCheckOk = true;
           body.racyCheckOk = true;
           if (body.context && body.context.client) {
-            body.context.client.clientName = 'ANDROID';
-            body.context.client.clientVersion = '6.30.56';
-            body.context.client.androidSdkVersion = 33;
-            body.context.client.osVersion = '13';
-            body.context.client.platform = 'MOBILE';
-            body.context.client.userAgent = 'com.google.android.apps.youtube.music/6.30.56 (Linux; U; Android 13) gzip';
+            body.context.client.clientName = 'WEB_REMIX';
+            body.context.client.clientVersion = '1.20250310.01.00';
+            body.context.client.platform = 'DESKTOP';
+            body.context.client.osName = 'Windows';
+            body.context.client.osVersion = '10';
           }
           init = Object.assign({}, init, { body: JSON.stringify(body) });
         } catch(e) {}

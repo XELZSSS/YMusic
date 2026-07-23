@@ -12,6 +12,32 @@ pub struct EqMenuItems<R: Runtime> {
     pub eq_submenu: tauri::menu::Submenu<R>,
 }
 
+pub fn build_sleep_submenu<R: Runtime>(app: &AppHandle<R>, i18n: &I18n) -> Result<tauri::menu::Submenu<R>, &'static str> {
+    let Ok(s15) = MenuItemBuilder::with_id("sleep_15", i18n.t(I18nKey::TraySleep15min)).build(app) else {
+        return Err("Failed to create sleep_15");
+    };
+    let Ok(s30) = MenuItemBuilder::with_id("sleep_30", i18n.t(I18nKey::TraySleep30min)).build(app) else {
+        return Err("Failed to create sleep_30");
+    };
+    let Ok(s60) = MenuItemBuilder::with_id("sleep_60", i18n.t(I18nKey::TraySleep60min)).build(app) else {
+        return Err("Failed to create sleep_60");
+    };
+    let Ok(soff) = MenuItemBuilder::with_id("sleep_off", i18n.t(I18nKey::TraySleepOff)).build(app) else {
+        return Err("Failed to create sleep_off");
+    };
+    let Ok(sub) = SubmenuBuilder::new(app, i18n.t(I18nKey::TraySleepTimer))
+        .item(&s15)
+        .item(&s30)
+        .item(&s60)
+        .separator()
+        .item(&soff)
+        .build()
+    else {
+        return Err("Failed to build sleep submenu");
+    };
+    Ok(sub)
+}
+
 pub fn build_eq_submenu<R: Runtime>(app: &AppHandle<R>, saved: &EqState, i18n: &I18n) -> Result<EqMenuItems<R>, &'static str> {
 
     let Ok(eq_reset) = MenuItemBuilder::with_id("eq_reset", i18n.t(I18nKey::TrayResetEq))
