@@ -9,8 +9,6 @@ var EQ_PRESETS = [
 ];
 window.__ym_eq_presets = EQ_PRESETS;
 
-window.__ym_eq_toggle_panel = function() {};
-
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.shiftKey && e.key === 'E') {
     e.preventDefault();

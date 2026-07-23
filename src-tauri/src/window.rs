@@ -34,12 +34,9 @@ fn build_initialization_script() -> String {
         include_str!("../../src/scripts/equalizer.js"),
         include_str!("../../src/scripts/eq-ui.js"),
     ];
-    let locale = sys_locale::get_locale().unwrap_or_default();
-    let lang = if locale.starts_with("zh") { "zh" } else { "en" };
     format!(
-        "window.__YM_CSS={};window.__YM_LOCALE='{}';(function(){{if(window.__ym_adblock)return;window.__ym_adblock=true;{}}})();",
+        "window.__YM_CSS={};(function(){{if(window.__ym_adblock)return;window.__ym_adblock=true;{}}})();",
         js_template_literal(config::INJECTED_CSS),
-        lang,
         parts.join("\n"),
     )
 }

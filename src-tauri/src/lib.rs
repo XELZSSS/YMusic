@@ -5,7 +5,6 @@ mod privacy;
 mod tray;
 mod window;
 
-use std::sync::Mutex;
 use tauri::Manager;
 
 fn on_window_close_requested(app_handle: &tauri::AppHandle) {
@@ -70,7 +69,6 @@ pub fn run() {
             );
 
             let saved = eq_state::load(app.handle());
-            app.manage(Mutex::new(saved.clone()));
 
             let webview = window::create_main_window(app.handle())
                 .expect("Failed to create main window");
