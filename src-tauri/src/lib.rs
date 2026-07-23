@@ -3,8 +3,21 @@ mod privacy;
 mod tray;
 mod window;
 
-use tauri::WindowEvent;
 use tauri::Manager;
+
+fn on_window_close_requested(app_handle: &tauri::AppHandle) {
+    let Some(win) = app_handle.get_webview_window("main") else {
+        return;
+    };
+    if !win.is_visible().unwrap_or(false) {
+        return;
+    }
+    let _ = win.eval(
+        "var v=document.querySelector('video');\
+         if(v&&v.paused){v.src='';v.load()}",
+    );
+    let _ = win.hide();
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -20,14 +33,8 @@ pub fn run() {
 
             let app_handle = app.handle().clone();
             webview.on_window_event(move |event| {
-                if let WindowEvent::CloseRequested { api, .. } = event {
-                    if let Some(win) = app_handle.get_webview_window("main") {
-                        let _ = win.eval(
-                            "var v=document.querySelector('video');\
-                             if(v&&v.paused){v.src='';v.load()}",
-                        );
-                        let _ = win.hide();
-                    }
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    on_window_close_requested(&app_handle);
                     api.prevent_close();
                 }
             });

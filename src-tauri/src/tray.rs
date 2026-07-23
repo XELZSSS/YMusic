@@ -5,50 +5,37 @@ use tauri::{
 };
 
 fn toggle_window(app: &AppHandle) {
-    if let Some(win) = app.get_webview_window("main") {
-        if win.is_visible().unwrap_or(false) {
-            let _ = win.hide();
-        } else {
-            let _ = win.show();
-        }
+    let Some(win) = app.get_webview_window("main") else {
+        return;
+    };
+    if win.is_visible().unwrap_or(false) {
+        let _ = win.hide();
+    } else {
+        let _ = win.show();
     }
 }
 
 pub fn create_tray(app: &AppHandle) {
-    let show_hide = match MenuItemBuilder::with_id("show_hide", "显示/隐藏").build(app) {
-        Ok(item) => item,
-        Err(e) => {
-            eprintln!("Failed to create show_hide menu item: {e}");
-            return;
-        }
+    let Ok(show_hide) = MenuItemBuilder::with_id("show_hide", "显示/隐藏").build(app) else {
+        eprintln!("Failed to create tray menu item 'show_hide'");
+        return;
     };
-    let quit = match MenuItemBuilder::with_id("quit", "退出").build(app) {
-        Ok(item) => item,
-        Err(e) => {
-            eprintln!("Failed to create quit menu item: {e}");
-            return;
-        }
+    let Ok(quit) = MenuItemBuilder::with_id("quit", "退出").build(app) else {
+        eprintln!("Failed to create tray menu item 'quit'");
+        return;
     };
-
-    let menu = match MenuBuilder::new(app)
+    let Ok(menu) = MenuBuilder::new(app)
         .item(&show_hide)
         .separator()
         .item(&quit)
         .build()
-    {
-        Ok(m) => m,
-        Err(e) => {
-            eprintln!("Failed to build tray menu: {e}");
-            return;
-        }
+    else {
+        eprintln!("Failed to build tray menu");
+        return;
     };
-
-    let icon = match app.default_window_icon() {
-        Some(icon) => icon.clone(),
-        None => {
-            eprintln!("No default window icon configured for tray");
-            return;
-        }
+    let Some(icon) = app.default_window_icon().cloned() else {
+        eprintln!("No default window icon configured for tray");
+        return;
     };
 
     let _tray = TrayIconBuilder::new()
