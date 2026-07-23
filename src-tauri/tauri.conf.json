@@ -1,13 +1,21 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
   "productName": "YMusic",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "identifier": "com.ymusic.desktop",
   "build": {
     "frontendDist": "../src",
     "devUrl": "http://localhost:1420",
     "beforeDevCommand": "npx vite",
     "beforeBuildCommand": ""
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/XELZSSS/YMusic/releases/latest/download/updater.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJDQzVEMDcwNDQyMzFCNDkKUldSSkd5TkVjTkRGTERpeThlcEpUclFSWFdZemNCOFhPbDFoU0MvUWZXbVdaemsrMHF3cmk4elMK"
+    }
   },
   "app": {
     "windows": [],
@@ -18,6 +26,7 @@
   "bundle": {
     "active": true,
     "targets": "nsis",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/icon.ico",
       "icons/32x32.png",

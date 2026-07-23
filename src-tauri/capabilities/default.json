@@ -3,6 +3,12 @@
   "description": "Default capabilities for YMusic",
   "windows": ["main"],
   "permissions": [
-    "core:default"
+    "core:default",
+    "global-shortcut:default",
+    "window-state:default",
+    "store:default",
+    "opener:default",
+    "notification:default",
+    "updater:default"
   ]
 }

@@ -1,8 +1,27 @@
 use std::collections::HashMap;
 
+#[derive(Hash, PartialEq, Eq, Clone, Copy)]
+pub enum I18nKey {
+    AppWindowTitle,
+    AppTooltip,
+    TrayShowHide,
+    TrayEqualizer,
+    TrayEnableEq,
+    TrayPresets,
+    TrayResetEq,
+    TrayQuit,
+    TrayPresetFlat,
+    TrayPresetPop,
+    TrayPresetRock,
+    TrayPresetJazz,
+    TrayPresetClassical,
+    TrayPresetBass,
+    TrayPresetTreble,
+}
+
 pub struct I18n {
     lang: String,
-    strings: HashMap<&'static str, &'static str>,
+    strings: HashMap<I18nKey, &'static str>,
 }
 
 impl I18n {
@@ -20,47 +39,63 @@ impl I18n {
         &self.lang
     }
 
-    pub fn t(&self, key: &'static str) -> &str {
-        self.strings.get(key).copied().unwrap_or(key)
+    pub fn t(&self, key: I18nKey) -> &str {
+        self.strings.get(&key).copied().unwrap_or(match key {
+            I18nKey::AppWindowTitle => "YMusic",
+            I18nKey::AppTooltip => "YMusic",
+            I18nKey::TrayShowHide => "Show/Hide",
+            I18nKey::TrayEqualizer => "Equalizer",
+            I18nKey::TrayEnableEq => "Enable EQ",
+            I18nKey::TrayPresets => "Presets",
+            I18nKey::TrayResetEq => "Reset EQ",
+            I18nKey::TrayQuit => "Quit",
+            I18nKey::TrayPresetFlat => "Flat",
+            I18nKey::TrayPresetPop => "Pop",
+            I18nKey::TrayPresetRock => "Rock",
+            I18nKey::TrayPresetJazz => "Jazz",
+            I18nKey::TrayPresetClassical => "Classical",
+            I18nKey::TrayPresetBass => "Bass Booster",
+            I18nKey::TrayPresetTreble => "Treble Boost",
+        })
     }
 }
 
-fn en_map() -> HashMap<&'static str, &'static str> {
+fn en_map() -> HashMap<I18nKey, &'static str> {
     let mut m = HashMap::new();
-    m.insert("app.window_title", "YMusic");
-    m.insert("app.tooltip", "YMusic");
-    m.insert("tray.show_hide", "Show/Hide");
-    m.insert("tray.equalizer", "Equalizer");
-    m.insert("tray.enable_eq", "Enable EQ");
-    m.insert("tray.presets", "Presets");
-    m.insert("tray.reset_eq", "Reset EQ");
-    m.insert("tray.quit", "Quit");
-    m.insert("tray.preset_flat", "Flat");
-    m.insert("tray.preset_pop", "Pop");
-    m.insert("tray.preset_rock", "Rock");
-    m.insert("tray.preset_jazz", "Jazz");
-    m.insert("tray.preset_classical", "Classical");
-    m.insert("tray.preset_bass", "Bass Booster");
-    m.insert("tray.preset_treble", "Treble Boost");
+    m.insert(I18nKey::AppWindowTitle, "YMusic");
+    m.insert(I18nKey::AppTooltip, "YMusic");
+    m.insert(I18nKey::TrayShowHide, "Show/Hide");
+    m.insert(I18nKey::TrayEqualizer, "Equalizer");
+    m.insert(I18nKey::TrayEnableEq, "Enable EQ");
+    m.insert(I18nKey::TrayPresets, "Presets");
+    m.insert(I18nKey::TrayResetEq, "Reset EQ");
+    m.insert(I18nKey::TrayQuit, "Quit");
+    m.insert(I18nKey::TrayPresetFlat, "Flat");
+    m.insert(I18nKey::TrayPresetPop, "Pop");
+    m.insert(I18nKey::TrayPresetRock, "Rock");
+    m.insert(I18nKey::TrayPresetJazz, "Jazz");
+    m.insert(I18nKey::TrayPresetClassical, "Classical");
+    m.insert(I18nKey::TrayPresetBass, "Bass Booster");
+    m.insert(I18nKey::TrayPresetTreble, "Treble Boost");
     m
 }
 
-fn zh_map() -> HashMap<&'static str, &'static str> {
+fn zh_map() -> HashMap<I18nKey, &'static str> {
     let mut m = HashMap::new();
-    m.insert("app.window_title", "YMusic");
-    m.insert("app.tooltip", "YMusic");
-    m.insert("tray.show_hide", "显示/隐藏");
-    m.insert("tray.equalizer", "均衡器");
-    m.insert("tray.enable_eq", "开启均衡器");
-    m.insert("tray.presets", "预设");
-    m.insert("tray.reset_eq", "重置均衡器");
-    m.insert("tray.quit", "退出");
-    m.insert("tray.preset_flat", "平坦");
-    m.insert("tray.preset_pop", "流行");
-    m.insert("tray.preset_rock", "摇滚");
-    m.insert("tray.preset_jazz", "爵士");
-    m.insert("tray.preset_classical", "古典");
-    m.insert("tray.preset_bass", "低音增强");
-    m.insert("tray.preset_treble", "高音增强");
+    m.insert(I18nKey::AppWindowTitle, "YMusic");
+    m.insert(I18nKey::AppTooltip, "YMusic");
+    m.insert(I18nKey::TrayShowHide, "显示/隐藏");
+    m.insert(I18nKey::TrayEqualizer, "均衡器");
+    m.insert(I18nKey::TrayEnableEq, "开启均衡器");
+    m.insert(I18nKey::TrayPresets, "预设");
+    m.insert(I18nKey::TrayResetEq, "重置均衡器");
+    m.insert(I18nKey::TrayQuit, "退出");
+    m.insert(I18nKey::TrayPresetFlat, "平坦");
+    m.insert(I18nKey::TrayPresetPop, "流行");
+    m.insert(I18nKey::TrayPresetRock, "摇滚");
+    m.insert(I18nKey::TrayPresetJazz, "爵士");
+    m.insert(I18nKey::TrayPresetClassical, "古典");
+    m.insert(I18nKey::TrayPresetBass, "低音增强");
+    m.insert(I18nKey::TrayPresetTreble, "高音增强");
     m
 }

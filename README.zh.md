@@ -7,7 +7,7 @@
 基于 Tauri v2 构建的跨平台 YouTube Music 桌面客户端
 
 ![Tauri](https://img.shields.io/badge/Tauri-v2-ffc131?logo=tauri&logoColor=white)
-![Rust](https://img.shields.io/badge/Rust-1.70+-dea584?logo=rust&logoColor=white)
+![Rust](https://img.shields.io/badge/Rust-1.77.2+-dea584?logo=rust&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-22a6f0)
 ![Platform](https://img.shields.io/badge/Platform-Windows-0078d4)
 [![GitHub](https://img.shields.io/badge/GitHub-XELZSSS/YMusic-181717?logo=github)](https://github.com/XELZSSS/YMusic)
@@ -31,34 +31,38 @@
 
 ```
 YMusic/
-├── src/                   # 前端（注入脚本 + 样式）
-├── src-tauri/src/         # Rust 后端
-│   ├── lib.rs             # 应用设置 & 命令处理器
-│   ├── config.rs          # 常量配置（URL、窗口大小等）
-│   ├── window.rs          # 窗口创建 & 脚本注入
-│   ├── tray.rs            # 系统托盘 & 均衡器控制
-│   ├── eq_state.rs        # EQ 状态持久化
-│   ├── i18n.rs            # 国际化
-│   └── privacy.rs         # 剥离 CSP & 注入 CSS
-├── scripts/build-all.js   # 批量构建脚本
-├── vite.config.js         # Vite 开发服务器配置
-└── package.json           # npm 脚本 & 依赖
+├── src/                   # 注入脚本 + 样式
+├── src-tauri/             # Rust 后端
+│   ├── src/
+│   │   ├── lib.rs         # 入口 & 插件注册
+│   │   ├── window.rs      # 窗口 & 脚本注入
+│   │   ├── tray/          # 系统托盘
+│   │   ├── eq_state.rs    # EQ 持久化
+│   │   ├── presets.rs     # EQ 预设
+│   │   ├── i18n.rs        # 国际化
+│   │   ├── privacy.rs     # 隐私增强
+│   │   └── util.rs        # 工具函数
+│   ├── Cargo.toml
+│   ├── tauri.conf.json
+│   └── capabilities/
+├── scripts/build-all.js
+├── vite.config.js
+└── package.json
 ```
 
 ## 🔧 注入脚本 & 均衡器 & 配置
 
 | 脚本 | 说明 |
-|---|---|
+|---|---|---|
 | `css-injector.js` | 将自定义 CSS 注入 DOM |
 | `api-interceptor.js` | 从 API 响应中清除广告字段 |
 | `dom-remover.js` | 通过 MutationObserver 删除广告元素 |
 | `audio-ad.js` | 音频广告期间静音并自动跳过 |
-| `tracking-cleaner.js` | 从 URL 中清除跟踪参数 |
-| `innertube-tweaks.js` | 伪装为 Android 客户端请求 |
-| `equalizer.js` | Web Audio API 均衡器 |
-| `eq-ui.js` | 预设定义 + Ctrl+Shift+E 快捷键 |
+| `unified-fetch.js` | 合并的 fetch 拦截器（追踪参数清理 + InnerTube 伪装） |
+| `equalizer.js` | Web Audio API 10 段均衡器（`window.__ym.eq.*`） |
+| `eq-ui.js` | 均衡器预设 UI |
 
-均衡器状态持久化到 `eq_state.json`，启动自动恢复关键配置在 `src-tauri/src/config.rs`
+均衡器状态通过 `tauri-plugin-store` 持久化，启动时自动恢复。全局快捷键 `Ctrl+Shift+E` 由 Rust 端注册（`tauri-plugin-global-shortcut`），窗口隐藏时也可切换。
 
 ## 💻 开发
 
@@ -88,7 +92,8 @@ Windows 安装包输出：`src-tauri/target/release/bundle/nsis/`
 
 - **框架**：[Tauri v2](https://v2.tauri.app)（Rust + WebView2）
 - **前端**：纯 JS 注入脚本 + Vite（仅开发服务器）
-- **依赖**：`http`、`sys-locale`、`serde`、`serde_json`
+- **Tauri 插件**：`window-state`、`global-shortcut`、`single-instance`、`store`、`opener`、`notification`、`updater`
+- **依赖**：`http`、`sys-locale`、`serde`、`serde_json`、`log`、`env_logger`
 - **CSP**：宽松策略，允许 `https:`、内联脚本及媒体/blob 资源
 
 ## 📄 许可证

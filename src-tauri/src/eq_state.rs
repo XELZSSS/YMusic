@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
+use tauri_plugin_store::StoreExt;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct EqState {
@@ -21,31 +21,21 @@ impl Default for EqState {
     }
 }
 
-fn state_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
-    let mut path = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    fs::create_dir_all(&path).map_err(|e| e.to_string())?;
-    path.push("eq_state.json");
-    Ok(path)
-}
+const STORE_FILE: &str = "eq_state.json";
+const STORE_KEY: &str = "eq_state";
 
 pub fn load(app: &AppHandle) -> EqState {
-    let path = match state_path(app) {
-        Ok(p) => p,
-        Err(_) => return EqState::default(),
-    };
-    fs::read_to_string(&path)
+    app.store(STORE_FILE)
         .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
+        .and_then(|s| s.get(STORE_KEY))
+        .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default()
 }
 
 pub fn save(app: &AppHandle, state: &EqState) {
-    let path = match state_path(app) {
-        Ok(p) => p,
-        Err(_) => return,
-    };
-    if let Ok(json) = serde_json::to_string_pretty(state) {
-        let _ = fs::write(&path, &json);
+    if let Ok(store) = app.store(STORE_FILE) {
+        let _ = store.set(STORE_KEY, serde_json::to_value(state).unwrap());
+        let _ = store.save();
     }
 }
 

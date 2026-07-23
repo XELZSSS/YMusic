@@ -1,92 +1,75 @@
-window.__ym_eq_bands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-window.__ym_eq_preamp = 0;
-window.__ym_eq_enabled = true;
+window.__ym = window.__ym || {};
 
-var EQ_FREQ = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+(function(ym) {
+  var bands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  var preamp = 0;
+  var enabled = true;
+  var FREQ = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 
-function __eq_setup(video) {
-  if (!video || video.__ym_eq_done) return;
+  var ctx = null;
+  var filters = null;
+  var preGain = null;
 
-  try {
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
-
-    var source = ctx.createMediaElementSource(video);
-
-    var preGain = ctx.createGain();
-    preGain.gain.value = 1;
-    var filters = [];
-    var prev = preGain;
-
-    for (var i = 0; i < EQ_FREQ.length; i++) {
-      var f = ctx.createBiquadFilter();
-      f.type = 'peaking';
-      f.frequency.value = EQ_FREQ[i];
-      f.Q.value = Math.SQRT1_2;
-      f.gain.value = 0;
-      prev.connect(f);
-      prev = f;
-      filters.push(f);
+  function setup(video) {
+    if (!video || video.__ym_eq_done) return;
+    try {
+      var c = new (window.AudioContext || window.webkitAudioContext)();
+      if (c.state === 'suspended') c.resume();
+      var s = c.createMediaElementSource(video);
+      var pg = c.createGain();
+      pg.gain.value = 1;
+      var fs = [];
+      var prev = pg;
+      for (var i = 0; i < FREQ.length; i++) {
+        var f = c.createBiquadFilter();
+        f.type = 'peaking';
+        f.frequency.value = FREQ[i];
+        f.Q.value = Math.SQRT1_2;
+        f.gain.value = 0;
+        prev.connect(f);
+        prev = f;
+        fs.push(f);
+      }
+      s.connect(pg);
+      prev.connect(c.destination);
+      ctx = c; filters = fs; preGain = pg;
+      video.__ym_eq_done = true;
+      apply();
+    } catch(e) {
+      console.warn('[YMusic] EQ setup failed:', e);
     }
-
-    source.connect(preGain);
-    prev.connect(ctx.destination);
-
-    window.__ym_eq_ctx = ctx;
-    window.__ym_eq_filters = filters;
-    window.__ym_eq_pregain = preGain;
-
-    video.__ym_eq_done = true;
-
-    __eq_apply();
-  } catch(e) {
-    console.warn('[YMusic] EQ setup failed:', e);
   }
-}
 
-function __eq_apply() {
-  if (!window.__ym_eq_filters) return;
-  var on = window.__ym_eq_enabled;
-  var fs = window.__ym_eq_filters;
-  for (var i = 0; i < fs.length; i++) {
-    fs[i].gain.value = on ? window.__ym_eq_bands[i] : 0;
+  function apply() {
+    if (!filters) return;
+    var on = enabled;
+    for (var i = 0; i < filters.length; i++) {
+      filters[i].gain.value = on ? bands[i] : 0;
+    }
+    if (preGain) {
+      preGain.gain.value = on ? Math.pow(10, preamp / 20) : 1;
+    }
   }
-  if (window.__ym_eq_pregain) {
-    window.__ym_eq_pregain.gain.value = on ? Math.pow(10, window.__ym_eq_preamp / 20) : 1;
-  }
-}
 
-window.__ym_eq_set_band = function(idx, gainDb) {
-  if (idx >= 0 && idx < window.__ym_eq_bands.length) {
-    window.__ym_eq_bands[idx] = gainDb;
-    __eq_apply();
-  }
-};
+  ym.eq = {
+    setBand: function(idx, gainDb) {
+      if (idx >= 0 && idx < bands.length) { bands[idx] = gainDb; apply(); }
+    },
+    setPreamp: function(gainDb) { preamp = gainDb; apply(); },
+    toggle: function(on) { enabled = on; apply(); },
+    applyPreset: function(b, p) {
+      if (b && b.length === bands.length) { for (var i = 0; i < b.length; i++) bands[i] = b[i]; }
+      if (p !== undefined) preamp = p;
+      apply();
+    },
+    getBands: function() { return bands.slice(); },
+    getPreamp: function() { return preamp; },
+    isEnabled: function() { return enabled; },
+  };
 
-window.__ym_eq_set_preamp = function(gainDb) {
-  window.__ym_eq_preamp = gainDb;
-  __eq_apply();
-};
-
-window.__ym_eq_toggle = function(enabled) {
-  window.__ym_eq_enabled = enabled;
-  __eq_apply();
-};
-
-window.__ym_eq_apply_preset = function(bands, preamp) {
-  if (bands && bands.length === window.__ym_eq_bands.length) {
-    for (var i = 0; i < bands.length; i++) window.__ym_eq_bands[i] = bands[i];
-  }
-  if (preamp !== undefined) window.__ym_eq_preamp = preamp;
-  __eq_apply();
-};
-
-(function() {
   function tryBind() {
     var video = document.querySelector('video');
-    if (video && video.readyState >= 2) {
-      __eq_setup(video);
-    }
+    if (video && video.readyState >= 2) setup(video);
   }
 
   if (document.readyState === 'loading') {
@@ -97,9 +80,7 @@ window.__ym_eq_apply_preset = function(bands, preamp) {
 
   var obs = new MutationObserver(function() {
     var video = document.querySelector('video');
-    if (video && !video.__ym_eq_done && video.readyState >= 2) {
-      __eq_setup(video);
-    }
+    if (video && !video.__ym_eq_done && video.readyState >= 2) setup(video);
   });
   if (document.body) {
     obs.observe(document.body, { childList: true, subtree: true });
@@ -108,4 +89,4 @@ window.__ym_eq_apply_preset = function(bands, preamp) {
       obs.observe(document.body, { childList: true, subtree: true });
     });
   }
-})();
+})(window.__ym);
