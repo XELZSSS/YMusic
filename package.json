@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "build:x86": "tauri build --target i686-pc-windows-msvc",
+    "build:all": "node scripts\\build-all.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"
