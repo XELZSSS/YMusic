@@ -53,7 +53,7 @@ YMusic/
 ## 🔧 注入脚本 & 均衡器 & 配置
 
 | 脚本 | 说明 |
-|---|---|---|
+|---|---|
 | `css-injector.js` | 将自定义 CSS 注入 DOM |
 | `api-interceptor.js` | 从 API 响应中清除广告字段 |
 | `dom-remover.js` | 通过 MutationObserver 删除广告元素 |

@@ -53,7 +53,7 @@ YMusic/
 ## 🔧 Injection Scripts & Equalizer & Configuration
 
 | Script | Description |
-|---|---|---|
+|---|---|
 | `css-injector.js` | Injects custom CSS into DOM |
 | `api-interceptor.js` | Strips ad fields from JSON API responses |
 | `dom-remover.js` | Removes ad DOM elements via MutationObserver |
