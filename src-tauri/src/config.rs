@@ -1,5 +1,4 @@
 pub const YMUSIC_URL: &str = "https://music.youtube.com";
-pub const WINDOW_TITLE: &str = "YMusic";
 pub const WINDOW_WIDTH: f64 = 1200.0;
 pub const WINDOW_HEIGHT: f64 = 800.0;
 pub const WINDOW_MIN_WIDTH: f64 = 800.0;

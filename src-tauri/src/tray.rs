@@ -1,17 +1,32 @@
+use std::sync::Mutex;
 use tauri::{
     menu::{CheckMenuItem, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager,
 };
 
+use crate::eq_state::{self, EqState};
+use crate::i18n::I18n;
+
 const PRESETS: &[(&str, &str)] = &[
-    ("eq_preset_0", "Flat"),
-    ("eq_preset_1", "Pop"),
-    ("eq_preset_2", "Rock"),
-    ("eq_preset_3", "Jazz"),
-    ("eq_preset_4", "Classical"),
-    ("eq_preset_5", "Bass Booster"),
-    ("eq_preset_6", "Treble Boost"),
+    ("eq_preset_0", "tray.preset_flat"),
+    ("eq_preset_1", "tray.preset_pop"),
+    ("eq_preset_2", "tray.preset_rock"),
+    ("eq_preset_3", "tray.preset_jazz"),
+    ("eq_preset_4", "tray.preset_classical"),
+    ("eq_preset_5", "tray.preset_bass"),
+    ("eq_preset_6", "tray.preset_treble"),
+];
+
+// 10-band preset values in the same order as EQ_FREQ in equalizer.js
+const PRESET_BANDS: &[([f64; 10], f64)] = &[
+    ([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 0.0),   // Flat
+    ([-1.0, 2.0, 3.0, 4.0, 5.0, 3.0, 2.0, 1.0, 0.0, -1.0], 0.0), // Pop
+    ([4.0, 3.0, 2.0, 1.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0], 0.0),   // Rock
+    ([3.0, 2.0, 1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 2.0, 3.0], 0.0),   // Jazz
+    ([4.0, 3.0, 2.0, 1.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0], -2.0),  // Classical
+    ([6.0, 5.0, 4.0, 2.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0], -3.0), // Bass Booster
+    ([-5.0, -4.0, -3.0, -2.0, 0.0, 2.0, 4.0, 5.0, 6.0, 6.0], -3.0),   // Treble Boost
 ];
 
 fn toggle_window(app: &AppHandle) {
@@ -25,41 +40,52 @@ fn toggle_window(app: &AppHandle) {
     }
 }
 
-pub fn create_tray(app: &AppHandle) {
-    let Ok(show_hide) = MenuItemBuilder::with_id("show_hide", "显示/隐藏").build(app) else {
+pub fn create_tray(app: &AppHandle, saved: &EqState) {
+    let i18n = I18n::new();
+    let last = Mutex::new(saved.clone());
+
+    let Ok(show_hide) = MenuItemBuilder::with_id("show_hide", i18n.t("tray.show_hide"))
+        .build(app)
+    else {
         eprintln!("[YMusic] Failed to create tray item 'show_hide'");
         return;
     };
 
-    let Ok(quit) = MenuItemBuilder::with_id("quit", "退出").build(app) else {
+    let Ok(quit) = MenuItemBuilder::with_id("quit", i18n.t("tray.quit"))
+        .build(app)
+    else {
         eprintln!("[YMusic] Failed to create tray item 'quit'");
         return;
     };
 
-    let Ok(eq_reset) = MenuItemBuilder::with_id("eq_reset", "重置均衡器").build(app) else {
+    let Ok(eq_reset) = MenuItemBuilder::with_id("eq_reset", i18n.t("tray.reset_eq"))
+        .build(app)
+    else {
         eprintln!("[YMusic] Failed to create tray item 'eq_reset'");
         return;
     };
 
-    // -- preset check items --
     let mut preset_items = Vec::new();
-    for (id, label) in PRESETS {
-        match CheckMenuItem::with_id(app, id, *label, true, false, None::<&str>) {
+    for (id, key) in PRESETS {
+        match CheckMenuItem::with_id(app, id, i18n.t(key), true, false, None::<&str>) {
             Ok(item) => preset_items.push(item),
             Err(_) => {
-                eprintln!("[YMusic] Failed to create preset '{}'", label);
+                eprintln!("[YMusic] Failed to create preset '{}'", key);
                 return;
             }
         }
     }
-    // clones for event handler: (clone, index)
-    let preset_clones: Vec<(CheckMenuItem<tauri::Wry>, usize)> = preset_items
+    // Restore preset check state from saved state
+    for (i, item) in preset_items.iter().enumerate() {
+        let _ = item.set_checked(saved.preset_index == Some(i));
+    }
+    let preset_clones: Vec<_> = preset_items
         .iter()
         .enumerate()
         .map(|(i, item)| (item.clone(), i))
         .collect();
 
-    let mut pb = SubmenuBuilder::new(app, "预设");
+    let mut pb = SubmenuBuilder::new(app, i18n.t("tray.presets"));
     for item in &preset_items {
         pb = pb.item(item);
     }
@@ -68,16 +94,21 @@ pub fn create_tray(app: &AppHandle) {
         return;
     };
 
-    // -- EQ toggle --
-    let Ok(eq_toggle) =
-        CheckMenuItem::with_id(app, "eq_toggle", "开启均衡器", true, true, None::<&str>)
+    let Ok(eq_toggle) = CheckMenuItem::with_id(
+        app,
+        "eq_toggle",
+        i18n.t("tray.enable_eq"),
+        true,
+        saved.enabled,
+        None::<&str>,
+    )
     else {
         eprintln!("[YMusic] Failed to create tray item 'eq_toggle'");
         return;
     };
     let eq_toggle_ref = eq_toggle.clone();
 
-    let Ok(eq_submenu) = SubmenuBuilder::new(app, "均衡器")
+    let Ok(eq_submenu) = SubmenuBuilder::new(app, i18n.t("tray.equalizer"))
         .item(&eq_toggle)
         .separator()
         .item(&presets_submenu)
@@ -108,7 +139,7 @@ pub fn create_tray(app: &AppHandle) {
 
     let _tray = TrayIconBuilder::new()
         .icon(icon)
-        .tooltip("YMusic")
+        .tooltip(i18n.t("app.tooltip"))
         .menu(&menu)
         .on_menu_event(move |app, event| match event.id().as_ref() {
             "quit" => app.exit(0),
@@ -121,28 +152,40 @@ pub fn create_tray(app: &AppHandle) {
                         checked
                     ));
                 }
-                // clear all preset checks when toggling EQ off
                 if !checked {
                     for (item, _) in &preset_clones {
                         let _ = item.set_checked(false);
                     }
                 }
+                // Persist: keep bands/preamp from last known state, update enabled
+                let mut ls = last.lock().unwrap();
+                ls.enabled = checked;
+                eq_state::save(app, &ls);
             }
             id if id.starts_with("eq_preset_") => {
                 let idx: usize = id.trim_start_matches("eq_preset_").parse().unwrap_or(0);
+                let bands = PRESET_BANDS[idx].0;
+                let preamp = PRESET_BANDS[idx].1;
                 if let Some(win) = app.get_webview_window("main") {
+                    let bands_str = bands.iter().map(|b| b.to_string()).collect::<Vec<_>>().join(",");
                     let _ = win.eval(&format!(
-                        "var p=window.__ym_eq_presets[{}];\
-                         p&&window.__ym_eq_apply_preset&&window.__ym_eq_apply_preset(p[1],p[2])",
-                        idx
+                        "window.__ym_eq_apply_preset && window.__ym_eq_apply_preset([{}],{})",
+                        bands_str, preamp
                     ));
                 }
-                // check selected preset, uncheck others
                 for (item, i) in &preset_clones {
                     let _ = item.set_checked(*i == idx);
                 }
-                // ensure EQ is on
                 let _ = eq_toggle_ref.set_checked(true);
+                // Persist
+                let state = EqState {
+                    enabled: true,
+                    preset_index: Some(idx),
+                    bands,
+                    preamp,
+                };
+                *last.lock().unwrap() = state.clone();
+                eq_state::save(app, &state);
             }
             "eq_reset" => {
                 if let Some(win) = app.get_webview_window("main") {
@@ -151,11 +194,19 @@ pub fn create_tray(app: &AppHandle) {
                          window.__ym_eq_apply_preset([0,0,0,0,0,0,0,0,0,0],0)",
                     );
                 }
-                // clear all preset checks
                 for (item, _) in &preset_clones {
                     let _ = item.set_checked(false);
                 }
                 let _ = eq_toggle_ref.set_checked(true);
+                // Persist
+                let state = EqState {
+                    enabled: true,
+                    preset_index: None,
+                    bands: [0.0; 10],
+                    preamp: 0.0,
+                };
+                *last.lock().unwrap() = state.clone();
+                eq_state::save(app, &state);
             }
             _ => {}
         })

@@ -6,6 +6,7 @@ use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri::Manager;
 
 use crate::config;
+use crate::i18n::I18n;
 
 fn js_template_literal(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 2);
@@ -33,9 +34,12 @@ fn build_initialization_script() -> String {
         include_str!("../../src/scripts/equalizer.js"),
         include_str!("../../src/scripts/eq-ui.js"),
     ];
+    let locale = sys_locale::get_locale().unwrap_or_default();
+    let lang = if locale.starts_with("zh") { "zh" } else { "en" };
     format!(
-        "window.__YM_CSS={};(function(){{if(window.__ym_adblock)return;window.__ym_adblock=true;{}}})();",
+        "window.__YM_CSS={};window.__YM_LOCALE='{}';(function(){{if(window.__ym_adblock)return;window.__ym_adblock=true;{}}})();",
         js_template_literal(config::INJECTED_CSS),
+        lang,
         parts.join("\n"),
     )
 }
@@ -58,13 +62,24 @@ pub fn create_main_window(app: &tauri::AppHandle) -> Result<WebviewWindow, Box<d
         .inner_size(config::WINDOW_WIDTH, config::WINDOW_HEIGHT)
         .min_inner_size(config::WINDOW_MIN_WIDTH, config::WINDOW_MIN_HEIGHT)
         .resizable(true)
-        .title(config::WINDOW_TITLE)
+        .title(I18n::new().t("app.window_title"))
         .visible(false)
         .theme(Some(tauri::Theme::Dark))
         .on_web_resource_request(crate::privacy::on_resource_request)
         .initialization_script(&combined_script)
-        .on_page_load(move |_webview, event| {
+        .on_page_load(move |webview, event| {
             if let PageLoadEvent::Finished = event.event() {
+                let app_handle = webview.app_handle();
+                let current = crate::eq_state::load(&app_handle);
+                let bands_js = current.bands.iter()
+                    .map(|b| b.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",");
+                let _ = webview.eval(&format!(
+                    "window.__ym_eq_toggle({});\
+                     window.__ym_eq_apply_preset([{}],{})",
+                    current.enabled, bands_js, current.preamp
+                ));
                 show_window_later(ah.clone());
             }
         })

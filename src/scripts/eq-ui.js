@@ -14,6 +14,17 @@ window.__ym_eq_toggle_panel = function() {};
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.shiftKey && e.key === 'E') {
     e.preventDefault();
-    if (window.__ym_eq_toggle) window.__ym_eq_toggle(!window.__ym_eq_enabled);
+    if (window.__ym_eq_toggle) {
+      var newState = !window.__ym_eq_enabled;
+      window.__ym_eq_toggle(newState);
+      try {
+        window.__TAURI__.invoke('save_eq_state', {
+          enabled: newState,
+          presetIndex: null,
+          bands: window.__ym_eq_bands,
+          preamp: window.__ym_eq_preamp,
+        });
+      } catch(ex) {}
+    }
   }
 });

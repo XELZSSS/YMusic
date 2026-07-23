@@ -1,8 +1,11 @@
 mod config;
+mod eq_state;
+mod i18n;
 mod privacy;
 mod tray;
 mod window;
 
+use std::sync::Mutex;
 use tauri::Manager;
 
 fn on_window_close_requested(app_handle: &tauri::AppHandle) {
@@ -40,10 +43,22 @@ fn toggle_eq(app: tauri::AppHandle, enabled: bool) {
     }
 }
 
+#[tauri::command]
+fn get_locale() -> String {
+    i18n::I18n::new().lang().to_string()
+}
+
+#[tauri::command]
+fn save_eq_state(app: tauri::AppHandle, enabled: bool, preset_index: Option<usize>, bands: [f64; 10], preamp: f64) {
+    eq_state::save(&app, &eq_state::EqState { enabled, preset_index, bands, preamp });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
+            get_locale,
+            save_eq_state,
             set_eq_band,
             set_eq_preamp,
             toggle_eq,
@@ -53,6 +68,9 @@ pub fn run() {
                 "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
                 config::WEBVIEW2_ARGS,
             );
+
+            let saved = eq_state::load(app.handle());
+            app.manage(Mutex::new(saved.clone()));
 
             let webview = window::create_main_window(app.handle())
                 .expect("Failed to create main window");
@@ -65,7 +83,7 @@ pub fn run() {
                 }
             });
 
-            tray::create_tray(app.handle());
+            tray::create_tray(app.handle(), &saved);
 
             Ok(())
         })
