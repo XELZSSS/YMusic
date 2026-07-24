@@ -32,35 +32,41 @@ A cross-platform YouTube Music desktop client built with Tauri v2
 ```
 YMusic/
 ├── src/                   # Injection scripts + styles
+│   └── scripts/
+│       ├── core/          # CSS injection
+│       ├── adblock/       # API/DOM/audio ad blocking
+│       ├── privacy/       # Tracking cleanup, InnerTube spoofing
+│       ├── equalizer/     # Web Audio API 10-band EQ
+│       └── audio/         # Audio-only mode, visualizer
 ├── src-tauri/             # Rust backend
-│   ├── src/
-│   │   ├── lib.rs         # Entry point & plugin registration
-│   │   ├── window.rs      # Window & script injection
-│   │   ├── tray/          # System tray
-│   │   ├── eq_state.rs    # EQ persistence
-│   │   ├── presets.rs     # EQ presets
-│   │   ├── i18n.rs        # i18n
-│   │   ├── privacy.rs     # Privacy enhancements
-│   │   └── util.rs        # Utilities
-│   ├── Cargo.toml
-│   ├── tauri.conf.json
-│   └── capabilities/
-├── scripts/build-all.js
+│   └── src/
+│       ├── lib.rs         # App setup, plugins, commands
+│       ├── app/           # Config, utilities
+│       ├── i18n/          # Internationalization
+│       ├── window/        # Window management
+│       ├── privacy/       # CSP stripping
+│       ├── adblock/       # Ad blocking scripts
+│       ├── equalizer/     # EQ state, presets
+│       └── tray/          # System tray
+├── scripts/
 ├── vite.config.js
 └── package.json
 ```
 
 ## 🔧 Injection Scripts & Equalizer & Configuration
 
-| Script | Description |
-|---|---|
-| `css-injector.js` | Injects custom CSS into DOM |
-| `api-interceptor.js` | Strips ad fields from JSON API responses |
-| `dom-remover.js` | Removes ad DOM elements via MutationObserver |
-| `audio-ad.js` | Mutes video during audio ads, auto-skips |
-| `unified-fetch.js` | Merged fetch interceptor (tracking cleanup + InnerTube spoofing) |
-| `equalizer.js` | Web Audio API 10-band EQ (`window.__ym.eq.*`) |
-| `eq-ui.js` | EQ preset UI |
+| Module | Script | Description |
+|---|---|---|
+| `core/` | `css-injector.js` | Injects custom CSS into DOM |
+| `adblock/` | `api-interceptor.js` | Strips ad fields from JSON API responses |
+| `adblock/` | `dom-remover.js` | Removes ad DOM elements via MutationObserver |
+| `adblock/` | `audio-ad.js` | Mutes video during audio ads, auto-skips |
+| `privacy/` | `unified-fetch.js` | Fetch interceptor (tracking cleanup + InnerTube spoofing) |
+| `privacy/` | `ytcfg-injector.js` | Tweaks ytcfg for enhanced features |
+| `equalizer/` | `equalizer.js` | Web Audio API 10-band EQ (`window.__ym.eq.*`) |
+| `equalizer/` | `eq-ui.js` | EQ preset UI |
+| `audio/` | `audio-only.js` | Audio-only mode (disables video streams) |
+| `audio/` | `visualizer.js` | Audio visualizer (`window.__ym.viz.*`) |
 
 EQ state is persisted via `tauri-plugin-store` and restored on launch. Global shortcut `Ctrl+Shift+E` is registered in Rust via `tauri-plugin-global-shortcut`, works even when the window is hidden.
 

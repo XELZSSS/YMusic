@@ -32,35 +32,41 @@
 ```
 YMusic/
 ├── src/                   # 注入脚本 + 样式
+│   └── scripts/
+│       ├── core/          # CSS 注入
+│       ├── adblock/       # API/DOM/音频广告拦截
+│       ├── privacy/       # 追踪清理、InnerTube 伪装
+│       ├── equalizer/     # Web Audio API 10 段均衡器
+│       └── audio/         # 纯音频模式、可视化
 ├── src-tauri/             # Rust 后端
-│   ├── src/
-│   │   ├── lib.rs         # 入口 & 插件注册
-│   │   ├── window.rs      # 窗口 & 脚本注入
-│   │   ├── tray/          # 系统托盘
-│   │   ├── eq_state.rs    # EQ 持久化
-│   │   ├── presets.rs     # EQ 预设
-│   │   ├── i18n.rs        # 国际化
-│   │   ├── privacy.rs     # 隐私增强
-│   │   └── util.rs        # 工具函数
-│   ├── Cargo.toml
-│   ├── tauri.conf.json
-│   └── capabilities/
-├── scripts/build-all.js
+│   └── src/
+│       ├── lib.rs         # 应用启动、插件、命令
+│       ├── app/           # 配置、工具函数
+│       ├── i18n/          # 国际化
+│       ├── window/        # 窗口管理
+│       ├── privacy/       # CSP 剥离
+│       ├── adblock/       # 广告拦截脚本
+│       ├── equalizer/     # EQ 状态、预设
+│       └── tray/          # 系统托盘
+├── scripts/
 ├── vite.config.js
 └── package.json
 ```
 
 ## 🔧 注入脚本 & 均衡器 & 配置
 
-| 脚本 | 说明 |
-|---|---|
-| `css-injector.js` | 将自定义 CSS 注入 DOM |
-| `api-interceptor.js` | 从 API 响应中清除广告字段 |
-| `dom-remover.js` | 通过 MutationObserver 删除广告元素 |
-| `audio-ad.js` | 音频广告期间静音并自动跳过 |
-| `unified-fetch.js` | 合并的 fetch 拦截器（追踪参数清理 + InnerTube 伪装） |
-| `equalizer.js` | Web Audio API 10 段均衡器（`window.__ym.eq.*`） |
-| `eq-ui.js` | 均衡器预设 UI |
+| 模块 | 脚本 | 说明 |
+|---|---|---|
+| `core/` | `css-injector.js` | 将自定义 CSS 注入 DOM |
+| `adblock/` | `api-interceptor.js` | 从 API 响应中清除广告字段 |
+| `adblock/` | `dom-remover.js` | 通过 MutationObserver 删除广告元素 |
+| `adblock/` | `audio-ad.js` | 音频广告期间静音并自动跳过 |
+| `privacy/` | `unified-fetch.js` | 合并的 fetch 拦截器（追踪参数清理 + InnerTube 伪装） |
+| `privacy/` | `ytcfg-injector.js` | 修改 ytcfg 开启增强功能 |
+| `equalizer/` | `equalizer.js` | Web Audio API 10 段均衡器（`window.__ym.eq.*`） |
+| `equalizer/` | `eq-ui.js` | 均衡器预设 UI |
+| `audio/` | `audio-only.js` | 纯音频模式（禁用视频流） |
+| `audio/` | `visualizer.js` | 音频可视化（`window.__ym.viz.*`） |
 
 均衡器状态通过 `tauri-plugin-store` 持久化，启动时自动恢复。全局快捷键 `Ctrl+Shift+E` 由 Rust 端注册（`tauri-plugin-global-shortcut`），窗口隐藏时也可切换。
 

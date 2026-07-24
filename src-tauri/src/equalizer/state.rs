@@ -43,5 +43,3 @@ pub fn save(app: &AppHandle, state: &EqState) {
         }
     }
 }
-
-

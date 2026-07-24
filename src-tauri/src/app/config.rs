@@ -4,7 +4,7 @@ pub const WINDOW_HEIGHT: f64 = 720.0;
 pub const WINDOW_MIN_WIDTH: f64 = 854.0;
 pub const WINDOW_MIN_HEIGHT: f64 = 480.0;
 
-pub const INJECTED_CSS: &str = include_str!("../../src/assets/injected.css");
+pub const INJECTED_CSS: &str = include_str!("../../../src/assets/injected.css");
 
 pub const WEBVIEW2_ARGS: &str = concat!(
     "--disable-features=AutofillServerCommunication,TranslateUI,MediaRouter,OptimizationHints,CalculateNativeWinOcclusion,EdgeFeedback ",

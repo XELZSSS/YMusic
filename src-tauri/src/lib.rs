@@ -1,18 +1,27 @@
 #![deny(unsafe_code)]
 
-mod config;
-mod eq_state;
-mod i18n;
-mod presets;
-mod privacy;
-mod tray;
-mod util;
-mod window;
+pub mod app;
+pub mod i18n;
+pub mod window;
+pub mod privacy;
+pub mod adblock;
+pub mod equalizer;
+pub mod tray;
 
+use std::sync::OnceLock;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_window_state::StateFlags;
+
+use crate::app::{config, util};
+use crate::i18n::I18n;
+
+static I18N: OnceLock<I18n> = OnceLock::new();
+
+fn get_i18n() -> &'static I18n {
+    I18N.get_or_init(I18n::new)
+}
 
 fn send_eq_notification(app: &tauri::AppHandle, enabled: bool) {
     let status = if enabled { "Enabled" } else { "Disabled" };
@@ -37,26 +46,9 @@ fn on_window_close_requested(app_handle: &tauri::AppHandle) {
     let _ = win.hide();
 }
 
-use std::sync::OnceLock;
-static I18N: OnceLock<i18n::I18n> = OnceLock::new();
-
-fn get_i18n() -> &'static i18n::I18n {
-    I18N.get_or_init(i18n::I18n::new)
-}
-
 #[tauri::command]
 fn get_locale() -> String {
     get_i18n().lang().to_string()
-}
-
-#[tauri::command]
-fn get_eq_presets() -> Vec<presets::EqPreset> {
-    presets::PRESETS.to_vec()
-}
-
-#[tauri::command]
-fn save_eq_state(app: tauri::AppHandle, enabled: bool, preset_index: Option<usize>, bands: [f64; 10], preamp: f64) {
-    eq_state::save(&app, &eq_state::EqState { enabled, preset_index, bands, preamp });
 }
 
 #[tauri::command]
@@ -73,12 +65,12 @@ fn toggle_audio_only(win: tauri::WebviewWindow) -> bool {
 }
 
 fn toggle_eq_global(app: &tauri::AppHandle) {
-    let saved = eq_state::load(app);
+    let saved = equalizer::load_eq_state(app);
     let new_state = !saved.enabled;
     if let Some(win) = app.get_webview_window("main") {
         util::eval(&win, &format!("window.__ym.eq.toggle({})", new_state));
     }
-    eq_state::save(app, &eq_state::EqState {
+    equalizer::save_eq_state_impl(app, &equalizer::EqState {
         enabled: new_state,
         preset_index: saved.preset_index,
         bands: saved.bands,
@@ -105,8 +97,8 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             get_locale,
-            get_eq_presets,
-            save_eq_state,
+            equalizer::get_eq_presets,
+            equalizer::save_eq_state,
             toggle_always_on_top,
             toggle_audio_only,
         ])
@@ -123,7 +115,7 @@ pub fn run() {
                 }
             }).map_err(|e| log::error!("Failed to setup shortcut handler: {}", e)).ok();
 
-            let saved = eq_state::load(app.handle());
+            let saved = equalizer::load_eq_state(app.handle());
 
             let webview = window::create_main_window(app.handle(), get_i18n())
                 .expect("Failed to create main window");

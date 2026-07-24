@@ -3,15 +3,15 @@ mod builder;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::{
-    menu::{CheckMenuItem, MenuBuilder, MenuItemBuilder},
+    menu::{CheckMenuItem, MenuItemBuilder, MenuBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, WebviewUrl,
 };
 use tauri_plugin_notification::NotificationExt;
 
-use crate::eq_state::{self, EqState};
+use crate::app::util;
+use crate::equalizer::{self, EqState, presets};
 use crate::i18n::{I18n, I18nKey};
-use crate::util;
 
 static SLEEP_CANCEL: Mutex<Option<Arc<AtomicBool>>> = Mutex::new(None);
 
@@ -27,7 +27,7 @@ fn toggle_window(app: &AppHandle) {
 }
 
 fn apply_preset(app: &AppHandle, idx: usize) {
-    let Some(preset) = crate::presets::PRESETS.get(idx) else {
+    let Some(preset) = presets::PRESETS.get(idx) else {
         log::error!("Invalid preset index: {}", idx);
         return;
     };
@@ -184,12 +184,12 @@ pub fn create_tray(app: &AppHandle, saved: &EqState, i18n: &I18n) {
                     }
                 };
                 ls.enabled = checked;
-                eq_state::save(app, &ls);
+                equalizer::save_eq_state_impl(app, &ls);
             }
             id if id.starts_with("eq_preset_") => {
                 let idx: usize = id.trim_start_matches("eq_preset_").parse().unwrap_or(0);
-                let idx = idx.min(crate::presets::PRESETS.len().saturating_sub(1));
-                let preset = &crate::presets::PRESETS[idx];
+                let idx = idx.min(presets::PRESETS.len().saturating_sub(1));
+                let preset = &presets::PRESETS[idx];
                 apply_preset(app, idx);
                 for (item, i) in &preset_clones {
                     let _ = item.set_checked(*i == idx);
@@ -208,7 +208,7 @@ pub fn create_tray(app: &AppHandle, saved: &EqState, i18n: &I18n) {
                         *poisoned.into_inner() = state.clone();
                     }
                 }
-                eq_state::save(app, &state);
+                equalizer::save_eq_state_impl(app, &state);
             }
             "eq_reset" => {
                 reset_eq(app);
@@ -229,7 +229,7 @@ pub fn create_tray(app: &AppHandle, saved: &EqState, i18n: &I18n) {
                         *poisoned.into_inner() = state.clone();
                     }
                 }
-                eq_state::save(app, &state);
+                equalizer::save_eq_state_impl(app, &state);
             }
             "always_on_top" => {
                 if let Some(win) = app.get_webview_window("main") {

@@ -2,9 +2,8 @@ use tauri::webview::{NewWindowResponse, PageLoadEvent};
 use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri::Manager;
 
-use crate::config;
+use crate::app::{config, util};
 use crate::i18n::{I18n, I18nKey};
-use crate::util;
 
 fn js_template_literal(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 2);
@@ -23,19 +22,17 @@ fn js_template_literal(s: &str) -> String {
 
 fn build_initialization_script() -> String {
     let parts = [
-        include_str!("../../src/scripts/css-injector.js"),
-        include_str!("../../src/scripts/api-interceptor.js"),
-        include_str!("../../src/scripts/dom-remover.js"),
-        include_str!("../../src/scripts/unified-fetch.js"),
-        include_str!("../../src/scripts/audio-ad.js"),
-        include_str!("../../src/scripts/ytcfg-injector.js"),
-        include_str!("../../src/scripts/equalizer.js"),
-        include_str!("../../src/scripts/visualizer.js"),
-        include_str!("../../src/scripts/audio-only.js"),
+        include_str!("../../../src/scripts/privacy/unified-fetch.js"),
+        include_str!("../../../src/scripts/privacy/ytcfg-injector.js"),
+        include_str!("../../../src/scripts/equalizer/equalizer.js"),
+        include_str!("../../../src/scripts/audio/visualizer.js"),
+        include_str!("../../../src/scripts/audio/audio-only.js"),
     ];
+    let adblock_scripts = crate::adblock::get_init_scripts().join("\n");
     format!(
-        "window.__YM_CSS={};(function(){{if(window.__ym_adblock)return;window.__ym_adblock=true;{}}})();",
+        "window.__YM_CSS={};(function(){{if(window.__ym_adblock)return;window.__ym_adblock=true;\n{}{}\n}})();",
         js_template_literal(config::INJECTED_CSS),
+        adblock_scripts,
         parts.join("\n"),
     )
 }
@@ -85,7 +82,7 @@ pub fn create_main_window(app: &tauri::AppHandle, i18n: &I18n) -> Result<Webview
         .on_page_load(move |webview, event| {
             if let PageLoadEvent::Finished = event.event() {
                 let app_handle = webview.app_handle();
-                let current = crate::eq_state::load(&app_handle);
+                let current = crate::equalizer::load_eq_state(&app_handle);
                 restore_eq_state(&webview, &current.bands, current.preamp, current.enabled);
                 show_window(&webview);
             }

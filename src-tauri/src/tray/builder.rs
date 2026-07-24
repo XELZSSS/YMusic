@@ -3,7 +3,7 @@ use tauri::{
     AppHandle, Runtime,
 };
 
-use crate::eq_state::EqState;
+use crate::equalizer::{state::EqState, presets};
 use crate::i18n::{I18n, I18nKey};
 
 pub struct EqMenuItems<R: Runtime> {
@@ -47,7 +47,7 @@ pub fn build_eq_submenu<R: Runtime>(app: &AppHandle<R>, saved: &EqState, i18n: &
     };
 
     let mut preset_items = Vec::new();
-    for p in crate::presets::PRESETS {
+    for p in presets::PRESETS {
         match CheckMenuItem::with_id(app, &p.id, i18n.t(p.name_key), true, false, None::<&str>) {
             Ok(item) => preset_items.push(item),
             Err(_) => return Err("Failed to create preset item"),

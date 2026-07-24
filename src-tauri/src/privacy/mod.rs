@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::config;
+use crate::app::config;
 
 fn is_youtube_request(request: &http::Request<Vec<u8>>) -> bool {
     request.uri().host().is_some_and(|h| {
